@@ -14,44 +14,28 @@ namespace RunningGearTracker_AquinoE.Pages
             _configuration = configuration;
         }
 
-        
-        [BindProperty]
-        public TrainingSessions NewSession { get; set; } = new TrainingSessions();
+        // ── Query string params for edit/delete (PDF pattern) ─────────────────
 
-        [BindProperty]
-        public List<int> SelectedGearIds { get; set; } = new List<int>();
-
-        
-        [BindProperty]
-        public Dictionary<string, string> GearNotes { get; set; } = new Dictionary<string, string>();
-
-        [BindProperty]
-        public Gear NewGear { get; set; } = new Gear();
-
-        [BindProperty]
-        public Gear EditGear { get; set; } = new Gear();
-
-        // Edit / Delete via query string (PDF pattern)
         [BindProperty(SupportsGet = true)]
         public int? EditGearId { get; set; }
 
         [BindProperty(SupportsGet = true)]
         public int? DeleteGearId { get; set; }
 
-        // ── Display Data ──────────────────────────────────────────────────────
+        // ── Display data ──────────────────────────────────────────────────────
 
         public List<Gear> Gears { get; set; } = new List<Gear>();
         public List<TrainingSessions> RecentSessions { get; set; } = new List<TrainingSessions>();
         public Gear CurrentGear { get; set; } = new Gear();
         public bool IsEditGear => EditGearId.HasValue;
 
-        // ── OnGet ─────────────────────────────────────────────────────────────
+        // ── OnGet — handles delete + load-for-edit (PDF pattern) ─────────────
 
         public void OnGet()
         {
             string connectionString = _configuration.GetConnectionString("DefaultConnection");
 
-            
+            // Delete gear if DeleteGearId is in query string
             if (DeleteGearId.HasValue)
             {
                 using (SqlConnection conn = new SqlConnection(connectionString))
@@ -76,7 +60,7 @@ namespace RunningGearTracker_AquinoE.Pages
                 return;
             }
 
-
+            // Load gear for editing if EditGearId is in query string
             if (EditGearId.HasValue)
             {
                 using (SqlConnection conn = new SqlConnection(connectionString))
@@ -109,51 +93,131 @@ namespace RunningGearTracker_AquinoE.Pages
             LoadData();
         }
 
-        // ── Create Training Session ───────────────────────────────────────────
+        // ── OnPost — single method handles all form submissions (PDF pattern) ─
+        // A hidden field called "action" tells us which form was submitted:
+        //   "logSession"   create a new training session + gear usage rows
+        //   "addGear"      insert a new gear record
+        //   "editGear"     update an existing gear record
 
-        public IActionResult OnPostCreateSession()
+        public IActionResult OnPost(
+            string action,
+            // Training session fields
+            string ActivityDate,
+            string Location,
+            double? Distance_KM,
+            string Duration,
+            string AvgHeartRate,
+            List<int> SelectedGearIds,
+            // Gear fields (shared by addGear and editGear)
+            int? GearID,
+            string Brand,
+            string ModelName,
+            string Category,
+            string PurchaseDate
+        )
         {
             string connectionString = _configuration.GetConnectionString("DefaultConnection");
 
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            // ── Log Session ───────────────────────────────────────────────────
+            if (action == "logSession")
             {
-                conn.Open();
-
-                
-                string insertSession =
-                    "INSERT INTO TrainingSessions (ActivityDate, Location, Distance_KM, Duration, AvgHeartRate) " +
-                    "VALUES (@ActivityDate, @Location, @Distance_KM, @Duration, @AvgHeartRate); " +
-                    "SELECT SCOPE_IDENTITY();";
-
-                int newSessionId;
-                using (SqlCommand cmd = new SqlCommand(insertSession, conn))
+                using (SqlConnection conn = new SqlConnection(connectionString))
                 {
-                    cmd.Parameters.AddWithValue("@ActivityDate",
-                        string.IsNullOrEmpty(NewSession.ActivityDate) ? (object)DBNull.Value : NewSession.ActivityDate);
-                    cmd.Parameters.AddWithValue("@Location",
-                        string.IsNullOrEmpty(NewSession.Location) ? (object)DBNull.Value : NewSession.Location);
-                    cmd.Parameters.AddWithValue("@Distance_KM", NewSession.Distance_KM);
-                    cmd.Parameters.AddWithValue("@Duration",
-                        string.IsNullOrEmpty(NewSession.Duration) ? (object)DBNull.Value : NewSession.Duration);
-                    cmd.Parameters.AddWithValue("@AvgHeartRate",
-                        string.IsNullOrEmpty(NewSession.AvgHeartRate) ? (object)DBNull.Value : NewSession.AvgHeartRate);
+                    conn.Open();
 
-                    newSessionId = Convert.ToInt32(cmd.ExecuteScalar());
-                }
+                    // Insert session — DB generates SessionID via IDENTITY
+                    string insertSession =
+                        "INSERT INTO TrainingSessions (ActivityDate, Location, Distance_KM, Duration, AvgHeartRate) " +
+                        "VALUES (@ActivityDate, @Location, @Distance_KM, @Duration, @AvgHeartRate); " +
+                        "SELECT SCOPE_IDENTITY();";
 
-
-                foreach (var gearId in SelectedGearIds)
-                {
-                    GearNotes.TryGetValue(gearId.ToString(), out string note);
-
-                    string insertUsage =
-                        "INSERT INTO GearUsage (GearID, SessionID, Notes) VALUES (@GearID, @SessionID, @Notes)";
-                    using (SqlCommand cmd = new SqlCommand(insertUsage, conn))
+                    int newSessionId;
+                    using (SqlCommand cmd = new SqlCommand(insertSession, conn))
                     {
-                        cmd.Parameters.AddWithValue("@GearID", gearId);
-                        cmd.Parameters.AddWithValue("@SessionID", newSessionId);
-                        cmd.Parameters.AddWithValue("@Notes",
-                            string.IsNullOrEmpty(note) ? (object)DBNull.Value : note);
+                        cmd.Parameters.AddWithValue("@ActivityDate",
+                            string.IsNullOrEmpty(ActivityDate) ? (object)DBNull.Value : ActivityDate);
+                        cmd.Parameters.AddWithValue("@Location",
+                            string.IsNullOrEmpty(Location) ? (object)DBNull.Value : Location);
+                        cmd.Parameters.AddWithValue("@Distance_KM",
+                            Distance_KM.HasValue ? (object)Distance_KM.Value : DBNull.Value);
+                        cmd.Parameters.AddWithValue("@Duration",
+                            string.IsNullOrEmpty(Duration) ? (object)DBNull.Value : Duration);
+                        cmd.Parameters.AddWithValue("@AvgHeartRate",
+                            string.IsNullOrEmpty(AvgHeartRate) ? (object)DBNull.Value : AvgHeartRate);
+
+                        newSessionId = Convert.ToInt32(cmd.ExecuteScalar());
+                    }
+
+                    // Insert one GearUsage row per checked gear
+                    // Notes are read from Request.Form using the pattern "note_{gearId}"
+                    foreach (var gearId in SelectedGearIds)
+                    {
+                        string note = Request.Form[$"note_{gearId}"].ToString();
+
+                        string insertUsage =
+                            "INSERT INTO GearUsage (GearID, SessionID, Notes) " +
+                            "VALUES (@GearID, @SessionID, @Notes)";
+                        using (SqlCommand cmd = new SqlCommand(insertUsage, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@GearID", gearId);
+                            cmd.Parameters.AddWithValue("@SessionID", newSessionId);
+                            cmd.Parameters.AddWithValue("@Notes",
+                                string.IsNullOrEmpty(note) ? (object)DBNull.Value : note);
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                }
+            }
+
+            // ── Add Gear ──────────────────────────────────────────────────────
+            else if (action == "addGear")
+            {
+                using (SqlConnection conn = new SqlConnection(connectionString))
+                {
+                    conn.Open();
+
+                    // GearID is NOT included — DB generates it via IDENTITY(1,1)
+                    string insertQuery =
+                        "INSERT INTO Gear (Brand, ModelName, Category, PurchaseDate) " +
+                        "VALUES (@Brand, @ModelName, @Category, @PurchaseDate)";
+
+                    using (SqlCommand cmd = new SqlCommand(insertQuery, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@Brand",
+                            string.IsNullOrEmpty(Brand) ? (object)DBNull.Value : Brand);
+                        cmd.Parameters.AddWithValue("@ModelName",
+                            string.IsNullOrEmpty(ModelName) ? (object)DBNull.Value : ModelName);
+                        cmd.Parameters.AddWithValue("@Category",
+                            string.IsNullOrEmpty(Category) ? (object)DBNull.Value : Category);
+                        cmd.Parameters.AddWithValue("@PurchaseDate",
+                            string.IsNullOrEmpty(PurchaseDate) ? (object)DBNull.Value : PurchaseDate);
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+            }
+
+            // ── Edit Gear ─────────────────────────────────────────────────────
+            else if (action == "editGear" && GearID.HasValue && GearID.Value > 0)
+            {
+                using (SqlConnection conn = new SqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string updateQuery =
+                        "UPDATE Gear SET Brand = @Brand, ModelName = @ModelName, " +
+                        "Category = @Category, PurchaseDate = @PurchaseDate " +
+                        "WHERE GearID = @GearID";
+
+                    using (SqlCommand cmd = new SqlCommand(updateQuery, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@GearID", GearID.Value);
+                        cmd.Parameters.AddWithValue("@Brand",
+                            string.IsNullOrEmpty(Brand) ? (object)DBNull.Value : Brand);
+                        cmd.Parameters.AddWithValue("@ModelName",
+                            string.IsNullOrEmpty(ModelName) ? (object)DBNull.Value : ModelName);
+                        cmd.Parameters.AddWithValue("@Category",
+                            string.IsNullOrEmpty(Category) ? (object)DBNull.Value : Category);
+                        cmd.Parameters.AddWithValue("@PurchaseDate",
+                            string.IsNullOrEmpty(PurchaseDate) ? (object)DBNull.Value : PurchaseDate);
                         cmd.ExecuteNonQuery();
                     }
                 }
@@ -162,73 +226,13 @@ namespace RunningGearTracker_AquinoE.Pages
             return RedirectToPage("/Index");
         }
 
-        // ── Create Gear ───────────────────────────────────────────────────────
-
-        public IActionResult OnPostCreateGear()
-        {
-            string connectionString = _configuration.GetConnectionString("DefaultConnection");
-
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            {
-                conn.Open();
-                string insertQuery =
-                    "INSERT INTO Gear (Brand, ModelName, Category, PurchaseDate) " +
-                    "VALUES (@Brand, @ModelName, @Category, @PurchaseDate)";
-
-                using (SqlCommand cmd = new SqlCommand(insertQuery, conn))
-                {
-                    cmd.Parameters.AddWithValue("@Brand",
-                        string.IsNullOrEmpty(NewGear.Brand) ? (object)DBNull.Value : NewGear.Brand);
-                    cmd.Parameters.AddWithValue("@ModelName",
-                        string.IsNullOrEmpty(NewGear.ModelName) ? (object)DBNull.Value : NewGear.ModelName);
-                    cmd.Parameters.AddWithValue("@Category",
-                        string.IsNullOrEmpty(NewGear.Category) ? (object)DBNull.Value : NewGear.Category);
-                    cmd.Parameters.AddWithValue("@PurchaseDate",
-                        string.IsNullOrEmpty(NewGear.PurchaseDate) ? (object)DBNull.Value : NewGear.PurchaseDate);
-                    cmd.ExecuteNonQuery();
-                }
-            }
-
-            return RedirectToPage("/Index");
-        }
-
-        // ── Update Gear ───────────────────────────────────────────────────────
-
-        public IActionResult OnPostUpdateGear()
-        {
-            string connectionString = _configuration.GetConnectionString("DefaultConnection");
-
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            {
-                conn.Open();
-                string updateQuery =
-                    "UPDATE Gear SET Brand = @Brand, ModelName = @ModelName, " +
-                    "Category = @Category, PurchaseDate = @PurchaseDate " +
-                    "WHERE GearID = @GearID";
-
-                using (SqlCommand cmd = new SqlCommand(updateQuery, conn))
-                {
-                    cmd.Parameters.AddWithValue("@GearID", EditGear.GearID);
-                    cmd.Parameters.AddWithValue("@Brand",
-                        string.IsNullOrEmpty(EditGear.Brand) ? (object)DBNull.Value : EditGear.Brand);
-                    cmd.Parameters.AddWithValue("@ModelName",
-                        string.IsNullOrEmpty(EditGear.ModelName) ? (object)DBNull.Value : EditGear.ModelName);
-                    cmd.Parameters.AddWithValue("@Category",
-                        string.IsNullOrEmpty(EditGear.Category) ? (object)DBNull.Value : EditGear.Category);
-                    cmd.Parameters.AddWithValue("@PurchaseDate",
-                        string.IsNullOrEmpty(EditGear.PurchaseDate) ? (object)DBNull.Value : EditGear.PurchaseDate);
-                    cmd.ExecuteNonQuery();
-                }
-            }
-
-            return RedirectToPage("/Index");
-        }
-
        
+
         private void LoadData()
         {
             string connectionString = _configuration.GetConnectionString("DefaultConnection");
 
+            // Load all gear
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
@@ -252,6 +256,7 @@ namespace RunningGearTracker_AquinoE.Pages
                 }
             }
 
+            // Load 3 most recent sessions
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
