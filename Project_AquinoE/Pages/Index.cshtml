@@ -5,7 +5,7 @@
     var categories = new[] { "Shoes", "Watch", "Apparel", "Socks", "Accessories", "Other" };
 }
 
-@* ── NAVBAR ──────────────────────────────────────────────────────────────── *@
+@*NAVBAR*@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
         <a class="navbar-brand fw-bold" href="#">🏃 Running Gear Tracker</a>
@@ -18,9 +18,7 @@
 
 <div class="container py-4">
 
-    @* ════════════════════════════════════════════════════════════════════
-       SECTION 1 — LOG A TRAINING SESSION
-       ════════════════════════════════════════════════════════════════════ *@
+    @*SECTION 1 — LOG A TRAINING SESSION*@
     <div class="mb-5">
         <h4 class="mb-3 border-bottom pb-2">📋 Log a Training Session</h4>
 
@@ -105,9 +103,7 @@
         </form>
     </div>
 
-    @* ════════════════════════════════════════════════════════════════════
-       SECTION 2 — GEAR REGISTRY
-       ════════════════════════════════════════════════════════════════════ *@
+    @* SECTION 2 — GEAR REGISTRY*@
     <div class="mb-5">
         <h4 class="mb-3 border-bottom pb-2">👟 Gear Registry</h4>
 
@@ -120,7 +116,6 @@
 
                 @if (Model.IsEditGear)
                 {
-                    @* EDIT FORM — pre-filled from CurrentGear loaded in OnGet *@
                     <form method="post" asp-page-handler="UpdateGear">
                         @Html.AntiForgeryToken()
                         <input type="hidden" asp-for="EditGear.GearID" value="@Model.CurrentGear.GearID" />
@@ -165,7 +160,7 @@
                 }
                 else
                 {
-                    @* ADD FORM — GearID omitted; DB generates it via IDENTITY *@
+
                     <form method="post" asp-page-handler="CreateGear">
                         @Html.AntiForgeryToken()
                         <div class="row g-3">
@@ -253,9 +248,7 @@
         }
     </div>
 
-    @* ════════════════════════════════════════════════════════════════════
-       SECTION 3 — RECENT SESSIONS
-       ════════════════════════════════════════════════════════════════════ *@
+    @* SECTION 3 — RECENT SESSIONS *@
     <div class="mb-4">
         <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
             <h4 class="mb-0">🕐 Recent Sessions</h4>
@@ -313,7 +306,6 @@
         var noteDiv = document.getElementById(checkbox.dataset.target);
         if (noteDiv) {
             noteDiv.style.display = checkbox.checked ? 'block' : 'none';
-            // Clear note if unchecked so no stale value is submitted
             if (!checkbox.checked) {
                 noteDiv.querySelector('input').value = '';
             }

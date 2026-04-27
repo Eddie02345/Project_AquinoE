@@ -14,18 +14,16 @@ namespace RunningGearTracker_AquinoE.Pages
             _configuration = configuration;
         }
 
-        // ── Bound Properties ─────────────────────────────────────────────────
-
+        
         [BindProperty]
         public TrainingSessions NewSession { get; set; } = new TrainingSessions();
 
-        // Which gear checkboxes are ticked
         [BindProperty]
         public List<int> SelectedGearIds { get; set; } = new List<int>();
 
-        // Notes keyed by GearID — e.g. GearNotes[3] = "Felt tight on left foot"
+        
         [BindProperty]
-        public Dictionary<int, string> GearNotes { get; set; } = new Dictionary<int, string>();
+        public Dictionary<string, string> GearNotes { get; set; } = new Dictionary<string, string>();
 
         [BindProperty]
         public Gear NewGear { get; set; } = new Gear();
@@ -53,7 +51,7 @@ namespace RunningGearTracker_AquinoE.Pages
         {
             string connectionString = _configuration.GetConnectionString("DefaultConnection");
 
-            // Delete gear if DeleteGearId is provided (PDF pattern: handle in OnGet)
+            
             if (DeleteGearId.HasValue)
             {
                 using (SqlConnection conn = new SqlConnection(connectionString))
@@ -78,7 +76,7 @@ namespace RunningGearTracker_AquinoE.Pages
                 return;
             }
 
-            // Load gear for editing if EditGearId is provided (PDF pattern: load in OnGet)
+
             if (EditGearId.HasValue)
             {
                 using (SqlConnection conn = new SqlConnection(connectionString))
@@ -121,7 +119,7 @@ namespace RunningGearTracker_AquinoE.Pages
             {
                 conn.Open();
 
-                // Insert session — DB auto-generates SessionID via IDENTITY
+                
                 string insertSession =
                     "INSERT INTO TrainingSessions (ActivityDate, Location, Distance_KM, Duration, AvgHeartRate) " +
                     "VALUES (@ActivityDate, @Location, @Distance_KM, @Duration, @AvgHeartRate); " +
@@ -143,10 +141,10 @@ namespace RunningGearTracker_AquinoE.Pages
                     newSessionId = Convert.ToInt32(cmd.ExecuteScalar());
                 }
 
-                // Insert one GearUsage row per selected gear, each with its own note
+
                 foreach (var gearId in SelectedGearIds)
                 {
-                    GearNotes.TryGetValue(gearId, out string note);
+                    GearNotes.TryGetValue(gearId.ToString(), out string note);
 
                     string insertUsage =
                         "INSERT INTO GearUsage (GearID, SessionID, Notes) VALUES (@GearID, @SessionID, @Notes)";
@@ -165,7 +163,6 @@ namespace RunningGearTracker_AquinoE.Pages
         }
 
         // ── Create Gear ───────────────────────────────────────────────────────
-        // GearID is NOT included — the DB generates it automatically via IDENTITY(1,1)
 
         public IActionResult OnPostCreateGear()
         {
@@ -227,8 +224,7 @@ namespace RunningGearTracker_AquinoE.Pages
             return RedirectToPage("/Index");
         }
 
-        // ── Load Data Helper ──────────────────────────────────────────────────
-
+       
         private void LoadData()
         {
             string connectionString = _configuration.GetConnectionString("DefaultConnection");
