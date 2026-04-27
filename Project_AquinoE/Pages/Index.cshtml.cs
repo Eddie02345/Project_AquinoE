@@ -14,7 +14,7 @@ namespace RunningGearTracker_AquinoE.Pages
             _configuration = configuration;
         }
 
-        // ── Query string params for edit/delete (PDF pattern) ─────────────────
+      
 
         [BindProperty(SupportsGet = true)]
         public int? EditGearId { get; set; }
@@ -22,14 +22,14 @@ namespace RunningGearTracker_AquinoE.Pages
         [BindProperty(SupportsGet = true)]
         public int? DeleteGearId { get; set; }
 
-        // ── Display data ──────────────────────────────────────────────────────
+        // ── Display data 
 
         public List<Gear> Gears { get; set; } = new List<Gear>();
         public List<TrainingSessions> RecentSessions { get; set; } = new List<TrainingSessions>();
         public Gear CurrentGear { get; set; } = new Gear();
         public bool IsEditGear => EditGearId.HasValue;
 
-        // ── OnGet — handles delete + load-for-edit (PDF pattern) ─────────────
+        // ── OnGet 
 
         public void OnGet()
         {
@@ -93,11 +93,10 @@ namespace RunningGearTracker_AquinoE.Pages
             LoadData();
         }
 
-        // ── OnPost — single method handles all form submissions (PDF pattern) ─
-        // A hidden field called "action" tells us which form was submitted:
-        //   "logSession"   create a new training session + gear usage rows
-        //   "addGear"      insert a new gear record
-        //   "editGear"     update an existing gear record
+        // ── OnPost — single method handles all form submissions
+        //   "logSession" create a new training session + gear usage rows
+        //   "addGear"     insert a new gear record
+        //   "editGear"   update an existing gear record
 
         public IActionResult OnPost(
             string action,
@@ -118,14 +117,13 @@ namespace RunningGearTracker_AquinoE.Pages
         {
             string connectionString = _configuration.GetConnectionString("DefaultConnection");
 
-            // ── Log Session ───────────────────────────────────────────────────
+            // ── Log Session 
             if (action == "logSession")
             {
                 using (SqlConnection conn = new SqlConnection(connectionString))
                 {
                     conn.Open();
 
-                    // Insert session — DB generates SessionID via IDENTITY
                     string insertSession =
                         "INSERT INTO TrainingSessions (ActivityDate, Location, Distance_KM, Duration, AvgHeartRate) " +
                         "VALUES (@ActivityDate, @Location, @Distance_KM, @Duration, @AvgHeartRate); " +
@@ -196,7 +194,7 @@ namespace RunningGearTracker_AquinoE.Pages
                 }
             }
 
-            // ── Edit Gear ─────────────────────────────────────────────────────
+            // ── Edit Gear
             else if (action == "editGear" && GearID.HasValue && GearID.Value > 0)
             {
                 using (SqlConnection conn = new SqlConnection(connectionString))
