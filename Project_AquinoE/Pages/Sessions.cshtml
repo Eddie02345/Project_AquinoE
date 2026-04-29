@@ -15,9 +15,9 @@
         </div>
     </div>
 </nav>
+<div class="container py-4">
 
-    @*
-       SECTION 1 — ADD / EDIT SESSION FORM*@
+    @* SECTION 1 — ADD / EDIT SESSION FORM *@
     <div class="mb-5">
         <h4 class="mb-3 border-bottom pb-2">
             @(Model.IsEditSession ? "✏️ Edit Session" : "➕ Add New Session")
@@ -70,7 +70,6 @@
                 }
                 else
                 {
-                    
                     <form method="post">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="action" value="addSession" />
@@ -111,8 +110,8 @@
             </div>
         </div>
     </div>
-    @*SECTION 2 — ALL SESSIONS TABLE*@
-<div class="container">
+
+    @* SECTION 2 — SEARCH AND SESSIONS TABLE *@
     <div class="card shadow-sm mb-4">
         <div class="card-body">
             <form method="get" class="mb-0">
@@ -126,7 +125,7 @@
                                    class="form-control"
                                    placeholder="Search by Location..."
                                    value="@Request.Query["searchString"]" />
-                        
+                            
                             <button type="submit" class="btn btn-primary">Search</button>
                             <a href="/Sessions" class="btn btn-outline-secondary">Clear</a>
                         </div>
@@ -135,6 +134,7 @@
             </form>
         </div>
     </div>
+
     <div class="mb-4">
         <h4 class="mb-3 border-bottom pb-2">📋 All Sessions</h4>
 
