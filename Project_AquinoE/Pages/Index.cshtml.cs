@@ -31,7 +31,7 @@ namespace RunningGearTracker_AquinoE.Pages
 
         // ── OnGet 
 
-        public void OnGet()
+        public void OnGet(string searchString)
         {
             string connectionString = _configuration.GetConnectionString("DefaultConnection");
 
@@ -90,7 +90,7 @@ namespace RunningGearTracker_AquinoE.Pages
                 }
             }
 
-            LoadData();
+            LoadData(searchString);
         }
 
         // ── OnPost — single method handles all form submissions
@@ -215,32 +215,51 @@ namespace RunningGearTracker_AquinoE.Pages
             return RedirectToPage("/Index");
         }
 
-       
 
-        private void LoadData()
+
+        private void LoadData(string searchString)
         {
             string connectionString = _configuration.GetConnectionString("DefaultConnection");
 
-            // Load all gear
+            // Load all gear (with optional Search)
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
-                string query = "SELECT * FROM Gear";
-                using (SqlCommand cmd = new SqlCommand(query, conn))
-                using (SqlDataReader reader = cmd.ExecuteReader())
+                string query = "";
+
+                // Check if the user searched for something
+                if (!string.IsNullOrEmpty(searchString))
                 {
-                    while (reader.Read())
+                    query = "SELECT * FROM Gear WHERE Brand LIKE @search OR ModelName LIKE @search";
+                }
+                else
+                {
+                    query = "SELECT * FROM Gear";
+                }
+
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    // If searching, add the parameter safely
+                    if (!string.IsNullOrEmpty(searchString))
                     {
-                        Gears.Add(new Gear
+                        cmd.Parameters.AddWithValue("@search", "%" + searchString + "%");
+                    }
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
                         {
-                            GearID = Convert.ToInt32(reader["GearID"]),
-                            Brand = reader["Brand"].ToString(),
-                            ModelName = reader["ModelName"].ToString(),
-                            Category = reader["Category"].ToString(),
-                            PurchaseDate = reader["PurchaseDate"] == DBNull.Value
-                                            ? ""
-                                            : Convert.ToDateTime(reader["PurchaseDate"]).ToString("yyyy-MM-dd")
-                        });
+                            Gears.Add(new Gear
+                            {
+                                GearID = Convert.ToInt32(reader["GearID"]),
+                                Brand = reader["Brand"].ToString(),
+                                ModelName = reader["ModelName"].ToString(),
+                                Category = reader["Category"].ToString(),
+                                PurchaseDate = reader["PurchaseDate"] == DBNull.Value
+                                                ? ""
+                                                : Convert.ToDateTime(reader["PurchaseDate"]).ToString("yyyy-MM-dd")
+                            });
+                        }
                     }
                 }
             }
