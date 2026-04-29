@@ -5,13 +5,14 @@
     var categories = new[] { "Shoes", "Watch", "Apparel", "Socks", "Accessories", "Other" };
 }
 
-@* ── NAVBAR*@
+@* ── NAVBAR ──────────────────────────────────────────────────────────────── *@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
-        <a class="navbar-brand fw-bold" href="#">🏃 Running Gear Tracker</a>
+        <a class="navbar-brand fw-bold" href="/">🏃 Running Gear Tracker</a>
         <div class="navbar-nav ms-auto">
-            <a class="nav-link active" href="#">Dashboard</a>
-            <a class="nav-link" asp-page="/Sessions">All Sessions</a>
+            <a class="nav-link active" href="/">Dashboard</a>
+            <a class="nav-link" href="/Sessions">All Sessions</a>
+            <a class="nav-link" href="/GearIndex">Gear Usage</a>
         </div>
     </div>
 </nav>

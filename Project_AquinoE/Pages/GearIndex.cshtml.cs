@@ -101,14 +101,14 @@ namespace RunningGearTracker_AquinoE.Pages
         {
             string connectionString = _configuration.GetConnectionString("DefaultConnection");
 
-            // ── Add Usage ─────────────────────────────────────────────────────
+            
             if (action == "addUsage")
             {
                 using (SqlConnection conn = new SqlConnection(connectionString))
                 {
                     conn.Open();
 
-                    // UsageID not included — DB generates it via IDENTITY
+                   
                     string insertQuery =
                         "INSERT INTO GearUsage (GearID, SessionID, Notes) " +
                         "VALUES (@GearID, @SessionID, @Notes)";
@@ -126,7 +126,7 @@ namespace RunningGearTracker_AquinoE.Pages
                 }
             }
 
-            // ── Edit Usage ────────────────────────────────────────────────────
+            
             else if (action == "editUsage" && UsageID.HasValue && UsageID.Value > 0)
             {
                 using (SqlConnection conn = new SqlConnection(connectionString))
@@ -154,13 +154,13 @@ namespace RunningGearTracker_AquinoE.Pages
             return RedirectToPage("/GearIndex");
         }
 
-        // ── Load data helper ──────────────────────────────────────────────────
+       
 
         private void LoadData()
         {
             string connectionString = _configuration.GetConnectionString("DefaultConnection");
 
-            // All usages joined with Session and Gear
+            
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
