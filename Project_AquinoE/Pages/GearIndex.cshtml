@@ -175,6 +175,28 @@
        ════════════════════════════════════════════════════════════════════ *@
     <div class="mb-4">
         <h4 class="mb-3 border-bottom pb-2">🔗 Session — Gear — Notes</h4>
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <form method="get" class="mb-0">
+                    <div class="row align-items-center">
+                        <div class="col-md-8 col-lg-6">
+                            <label for="searchString" class="form-label fw-bold">Search Gear Usage</label>
+                            <div class="input-group">
+                                <input type="text"
+                                       id="searchString"
+                                       name="searchString"
+                                       class="form-control"
+                                       placeholder="Search Notes, Gear, or Location..."
+                                       value="@Request.Query["searchString"]" />
+                        
+                                <button type="submit" class="btn btn-primary">Search</button>
+                                <a href="/GearIndex" class="btn btn-outline-secondary">Clear</a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
 
         @if (Model.AllUsages.Any())
         {
@@ -255,7 +277,7 @@
         else
         {
             <div class="alert alert-info">
-                No gear usage records yet. Use the form above to link gear to a session.
+                No gear usage records found.
             </div>
         }
     </div>

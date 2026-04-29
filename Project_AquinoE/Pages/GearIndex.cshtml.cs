@@ -33,7 +33,7 @@ namespace RunningGearTracker_AquinoE.Pages
 
         // ── OnGet — handles delete + load-for-edit (PDF pattern) ─────────────
 
-        public void OnGet()
+        public void OnGet(string searchString)
         {
             string connectionString = _configuration.GetConnectionString("DefaultConnection");
 
@@ -83,7 +83,7 @@ namespace RunningGearTracker_AquinoE.Pages
                 }
             }
 
-            LoadData();
+            LoadData(searchString);
         }
 
         // ── OnPost — single method, action hidden field branches logic ─────────
@@ -154,59 +154,105 @@ namespace RunningGearTracker_AquinoE.Pages
             return RedirectToPage("/GearIndex");
         }
 
-       
 
-        private void LoadData()
+
+        private void LoadData(string searchString)
         {
             string connectionString = _configuration.GetConnectionString("DefaultConnection");
 
-            
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
-                string query =
+                string query = "";
+
+                // Base SELECT and JOIN statements
+                string baseQuery =
                     "SELECT " +
                     "    gu.UsageID, gu.Notes, " +
                     "    g.GearID, g.Brand, g.ModelName, g.Category, " +
                     "    s.SessionID, s.ActivityDate, s.Location, s.Distance_KM, s.Duration, s.AvgHeartRate " +
                     "FROM GearUsage gu " +
-                    "INNER JOIN Gear g             ON gu.GearID    = g.GearID " +
-                    "INNER JOIN TrainingSessions s ON gu.SessionID = s.SessionID " +
-                    "ORDER BY s.ActivityDate DESC, g.Brand";
+                    "INNER JOIN Gear g              ON gu.GearID    = g.GearID " +
+                    "INNER JOIN TrainingSessions s ON gu.SessionID = s.SessionID ";
 
+                if (!string.IsNullOrEmpty(searchString))
+                {
+                    // Add WHERE clause searching across multiple columns in all 3 tables
+                    query = baseQuery +
+                            "WHERE gu.Notes LIKE @search " +
+                            "   OR g.Brand LIKE @search " +
+                            "   OR g.ModelName LIKE @search " +
+                            "   OR g.Category LIKE @search " +
+                            "   OR s.Location LIKE @search " +
+                            "ORDER BY s.ActivityDate DESC, g.Brand";
+                }
+                else
+                {
+                    query = baseQuery + "ORDER BY s.ActivityDate DESC, g.Brand";
+                }
+
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    if (!string.IsNullOrEmpty(searchString))
+                    {
+                        cmd.Parameters.AddWithValue("@search", "%" + searchString + "%");
+                    }
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            AllUsages.Add(new GearUsage
+                            {
+                                UsageID = Convert.ToInt32(reader["UsageID"]),
+                                GearID = Convert.ToInt32(reader["GearID"]),
+                                SessionID = Convert.ToInt32(reader["SessionID"]),
+                                Notes = reader["Notes"] == DBNull.Value
+                                             ? ""
+                                             : reader["Notes"].ToString(),
+                                Gear = new Gear
+                                {
+                                    GearID = Convert.ToInt32(reader["GearID"]),
+                                    Brand = reader["Brand"].ToString(),
+                                    ModelName = reader["ModelName"].ToString(),
+                                    Category = reader["Category"].ToString()
+                                },
+                                TrainingSessions = new TrainingSessions
+                                {
+                                    SessionID = Convert.ToInt32(reader["SessionID"]),
+                                    ActivityDate = reader["ActivityDate"] == DBNull.Value
+                                                    ? ""
+                                                    : Convert.ToDateTime(reader["ActivityDate"]).ToString("yyyy-MM-dd"),
+                                    Location = reader["Location"].ToString(),
+                                    Distance_KM = reader["Distance_KM"] == DBNull.Value
+                                                    ? 0
+                                                    : Convert.ToDouble(reader["Distance_KM"]),
+                                    Duration = reader["Duration"].ToString(),
+                                    AvgHeartRate = reader["AvgHeartRate"].ToString()
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+
+            // Sessions dropdown
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                string query = "SELECT * FROM TrainingSessions ORDER BY ActivityDate DESC";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 using (SqlDataReader reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
                     {
-                        AllUsages.Add(new GearUsage
+                        AllSessions.Add(new TrainingSessions
                         {
-                            UsageID = Convert.ToInt32(reader["UsageID"]),
-                            GearID = Convert.ToInt32(reader["GearID"]),
                             SessionID = Convert.ToInt32(reader["SessionID"]),
-                            Notes = reader["Notes"] == DBNull.Value
-                                         ? ""
-                                         : reader["Notes"].ToString(),
-                            Gear = new Gear
-                            {
-                                GearID = Convert.ToInt32(reader["GearID"]),
-                                Brand = reader["Brand"].ToString(),
-                                ModelName = reader["ModelName"].ToString(),
-                                Category = reader["Category"].ToString()
-                            },
-                            TrainingSessions = new TrainingSessions
-                            {
-                                SessionID = Convert.ToInt32(reader["SessionID"]),
-                                ActivityDate = reader["ActivityDate"] == DBNull.Value
-                                                ? ""
-                                                : Convert.ToDateTime(reader["ActivityDate"]).ToString("yyyy-MM-dd"),
-                                Location = reader["Location"].ToString(),
-                                Distance_KM = reader["Distance_KM"] == DBNull.Value
-                                                ? 0
-                                                : Convert.ToDouble(reader["Distance_KM"]),
-                                Duration = reader["Duration"].ToString(),
-                                AvgHeartRate = reader["AvgHeartRate"].ToString()
-                            }
+                            ActivityDate = reader["ActivityDate"] == DBNull.Value
+                                            ? ""
+                                            : Convert.ToDateTime(reader["ActivityDate"]).ToString("yyyy-MM-dd"),
+                            Location = reader["Location"].ToString()
                         });
                     }
                 }
