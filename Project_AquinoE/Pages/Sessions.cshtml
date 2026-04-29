@@ -16,8 +16,6 @@
     </div>
 </nav>
 
-<div class="container py-4">
-
     @*
        SECTION 1 — ADD / EDIT SESSION FORM*@
     <div class="mb-5">
@@ -115,6 +113,29 @@
     </div>
 
     @*SECTION 2 — ALL SESSIONS TABLE*@
+<div class="container py-4">
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="mb-0">
+                <div class="row align-items-center">
+                    <div class="col-md-8 col-lg-6">
+                        <label for="searchString" class="form-label fw-bold">Search Sessions</label>
+                        <div class="input-group">
+                            <input type="text"
+                                   id="searchString"
+                                   name="searchString"
+                                   class="form-control"
+                                   placeholder="Search by Location..."
+                                   value="@Request.Query["searchString"]" />
+                        
+                            <button type="submit" class="btn btn-primary">Search</button>
+                            <a href="/Sessions" class="btn btn-outline-secondary">Clear</a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
     <div class="mb-4">
         <h4 class="mb-3 border-bottom pb-2">📋 All Sessions</h4>
 
