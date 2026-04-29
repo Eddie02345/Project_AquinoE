@@ -120,47 +120,38 @@ namespace RunningGearTracker_AquinoE.Pages
             // ── Log Session 
             if (action == "logSession")
             {
+                double actualDistance = Distance_KM ?? 0.0;
+
                 using (SqlConnection conn = new SqlConnection(connectionString))
                 {
                     conn.Open();
 
-                    string insertSession =
-                        "INSERT INTO TrainingSessions (ActivityDate, Location, Distance_KM, Duration, AvgHeartRate) " +
-                        "VALUES (@ActivityDate, @Location, @Distance_KM, @Duration, @AvgHeartRate); " +
-                        "SELECT SCOPE_IDENTITY();";
+                    string insertSession = "INSERT INTO TrainingSessions (ActivityDate, Location, Distance_KM, Duration, AvgHeartRate) " +
+                                           "VALUES (@ActivityDate, @Location, @Distance_KM, @Duration, @AvgHeartRate); " +
+                                           "SELECT SCOPE_IDENTITY();";
 
                     int newSessionId;
                     using (SqlCommand cmd = new SqlCommand(insertSession, conn))
                     {
-                        cmd.Parameters.AddWithValue("@ActivityDate",
-                            string.IsNullOrEmpty(ActivityDate) ? (object)DBNull.Value : ActivityDate);
-                        cmd.Parameters.AddWithValue("@Location",
-                            string.IsNullOrEmpty(Location) ? (object)DBNull.Value : Location);
-                        cmd.Parameters.AddWithValue("@Distance_KM",
-                            Distance_KM.HasValue ? (object)Distance_KM.Value : DBNull.Value);
-                        cmd.Parameters.AddWithValue("@Duration",
-                            string.IsNullOrEmpty(Duration) ? (object)DBNull.Value : Duration);
-                        cmd.Parameters.AddWithValue("@AvgHeartRate",
-                            string.IsNullOrEmpty(AvgHeartRate) ? (object)DBNull.Value : AvgHeartRate);
+                        cmd.Parameters.AddWithValue("@ActivityDate", string.IsNullOrEmpty(ActivityDate) ? (object)DBNull.Value : ActivityDate);
+                        cmd.Parameters.AddWithValue("@Location", string.IsNullOrEmpty(Location) ? (object)DBNull.Value : Location);
+                        cmd.Parameters.AddWithValue("@Distance_KM", actualDistance);
+                        cmd.Parameters.AddWithValue("@Duration", string.IsNullOrEmpty(Duration) ? (object)DBNull.Value : Duration);
+                        cmd.Parameters.AddWithValue("@AvgHeartRate", string.IsNullOrEmpty(AvgHeartRate) ? (object)DBNull.Value : AvgHeartRate);
 
                         newSessionId = Convert.ToInt32(cmd.ExecuteScalar());
                     }
 
-                    // Insert one GearUsage row per checked gear
-                    // Notes are read from Request.Form using the pattern "note_{gearId}"
                     foreach (var gearId in SelectedGearIds)
                     {
                         string note = Request.Form[$"note_{gearId}"].ToString();
 
-                        string insertUsage =
-                            "INSERT INTO GearUsage (GearID, SessionID, Notes) " +
-                            "VALUES (@GearID, @SessionID, @Notes)";
+                        string insertUsage = "INSERT INTO GearUsage (GearID, SessionID, Notes) VALUES (@GearID, @SessionID, @Notes)";
                         using (SqlCommand cmd = new SqlCommand(insertUsage, conn))
                         {
                             cmd.Parameters.AddWithValue("@GearID", gearId);
                             cmd.Parameters.AddWithValue("@SessionID", newSessionId);
-                            cmd.Parameters.AddWithValue("@Notes",
-                                string.IsNullOrEmpty(note) ? (object)DBNull.Value : note);
+                            cmd.Parameters.AddWithValue("@Notes", string.IsNullOrEmpty(note) ? (object)DBNull.Value : note);
                             cmd.ExecuteNonQuery();
                         }
                     }
