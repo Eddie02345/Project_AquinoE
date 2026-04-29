@@ -45,7 +45,7 @@ namespace RunningGearTracker_AquinoE.Pages.Sessions
 
         // ── OnGet — handles all deletes + load-for-edit 
 
-        public void OnGet()
+        public void OnGet(string searchString)
         {
             string connectionString = _configuration.GetConnectionString("DefaultConnection");
 
@@ -204,7 +204,7 @@ namespace RunningGearTracker_AquinoE.Pages.Sessions
                 }
             }
 
-            LoadData();
+            LoadData(searchString);
         }
 
         // ── OnPost — single method, action hidden field branches the logic ─────
@@ -342,33 +342,50 @@ namespace RunningGearTracker_AquinoE.Pages.Sessions
         }
 
 
-        private void LoadData()
+        private void LoadData(string searchString)
         {
             string connectionString = _configuration.GetConnectionString("DefaultConnection");
 
-            // All sessions ordered newest first
+            // All sessions ordered newest first (with Search applied)
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
-                string query = "SELECT * FROM TrainingSessions ORDER BY ActivityDate DESC";
-                using (SqlCommand cmd = new SqlCommand(query, conn))
-                using (SqlDataReader reader = cmd.ExecuteReader())
+                string query = "";
+
+                if (!string.IsNullOrEmpty(searchString))
                 {
-                    while (reader.Read())
+                    query = "SELECT * FROM TrainingSessions WHERE Location LIKE @search ORDER BY ActivityDate DESC";
+                }
+                else
+                {
+                    query = "SELECT * FROM TrainingSessions ORDER BY ActivityDate DESC";
+                }
+
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    if (!string.IsNullOrEmpty(searchString))
                     {
-                        AllSessions.Add(new TrainingSessions
+                        cmd.Parameters.AddWithValue("@search", "%" + searchString + "%");
+                    }
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
                         {
-                            SessionID = Convert.ToInt32(reader["SessionID"]),
-                            ActivityDate = reader["ActivityDate"] == DBNull.Value
-                                            ? ""
-                                            : Convert.ToDateTime(reader["ActivityDate"]).ToString("yyyy-MM-dd"),
-                            Location = reader["Location"].ToString(),
-                            Distance_KM = reader["Distance_KM"] == DBNull.Value
-                                            ? 0
-                                            : Convert.ToDouble(reader["Distance_KM"]),
-                            Duration = reader["Duration"].ToString(),
-                            AvgHeartRate = reader["AvgHeartRate"].ToString()
-                        });
+                            AllSessions.Add(new TrainingSessions
+                            {
+                                SessionID = Convert.ToInt32(reader["SessionID"]),
+                                ActivityDate = reader["ActivityDate"] == DBNull.Value
+                                                ? ""
+                                                : Convert.ToDateTime(reader["ActivityDate"]).ToString("yyyy-MM-dd"),
+                                Location = reader["Location"].ToString(),
+                                Distance_KM = reader["Distance_KM"] == DBNull.Value
+                                                ? 0
+                                                : Convert.ToDouble(reader["Distance_KM"]),
+                                Duration = reader["Duration"].ToString(),
+                                AvgHeartRate = reader["AvgHeartRate"].ToString()
+                            });
+                        }
                     }
                 }
             }

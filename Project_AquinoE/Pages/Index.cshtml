@@ -110,13 +110,38 @@
     @*SECTION 2 — GEAR REGISTRY*@
     <div class="mb-5">
         <h4 class="mb-3 border-bottom pb-2">👟 Gear Registry</h4>
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <form method="get" class="mb-0">
+                    <div class="row align-items-center">
+                        <div class="col-md-8 col-lg-6">
+                            <label for="searchString" class="form-label fw-semibold">Search Gear</label>
+                            <div class="input-group">
+                                <input type="text"
+                                       id="searchString"
+                                       name="searchString"
+                                       class="form-control"
+                                       placeholder="Search by Brand or Model..."
+                                       value="@Request.Query["searchString"]" />
+                                
+                                <button type="submit" class="btn btn-primary">
+                                    Search
+                                </button>
+                                
+                                <a href="/" class="btn btn-outline-secondary">
+                                    Clear
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
 
         <div class="card shadow-sm mb-3">
             <div class="card-header bg-light fw-semibold">
                 @(Model.IsEditGear ? "✏️ Edit Gear" : "➕ Add New Gear")
-            </div>
-            <div class="card-body">
-
+         
                 @if (Model.IsEditGear)
                 {
                     @* EDIT FORM*@
