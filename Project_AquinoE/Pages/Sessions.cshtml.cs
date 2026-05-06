@@ -358,7 +358,7 @@ namespace RunningGearTracker_AquinoE.Pages.Sessions
                         " ActivityDate LIKE @search" +
                         " OR Distance_KM LIKE @search" +
                         " OR Duration LIKE @search" +
-                        " OR AvgHeartRate LIKE @searchmore" +
+                        " OR AvgHeartRate LIKE @search" +
                         " ORDER BY ActivityDate DESC";
                 }
                 else
