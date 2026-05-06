@@ -355,10 +355,11 @@ namespace RunningGearTracker_AquinoE.Pages.Sessions
                 if (!string.IsNullOrEmpty(searchString))
                 {
                     query = "SELECT * FROM TrainingSessions WHERE Location LIKE @search OR " +
-                        "ActivtyDate LIKE @search" +
-                        "OR Distance_KM LIKE @search" +
-                        "OR Duration LIKE @search" +
-                        "ORDER BY ActivityDate DESC";
+                        " ActivityDate LIKE @search" +
+                        " OR Distance_KM LIKE @search" +
+                        " OR Duration LIKE @search" +
+                        " OR AvgHeartRate LIKE @searchmore" +
+                        " ORDER BY ActivityDate DESC";
                 }
                 else
                 {
