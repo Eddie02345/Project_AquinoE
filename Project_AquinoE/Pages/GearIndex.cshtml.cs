@@ -188,7 +188,7 @@ namespace RunningGearTracker_AquinoE.Pages
                             "   OR s.Distance LIKE @search" +
                             "   OR s.Duration LIKE @search" +
                             "   OR s.AvgHeartRate LIKE @search" +
-                            "ORDER BY s.ActivityDate DESC, g.Brand";
+                            "   ORDER BY s.ActivityDate DESC, g.Brand";
                 }
                 else
                 {
