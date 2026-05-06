@@ -354,7 +354,11 @@ namespace RunningGearTracker_AquinoE.Pages.Sessions
 
                 if (!string.IsNullOrEmpty(searchString))
                 {
-                    query = "SELECT * FROM TrainingSessions WHERE Location LIKE @search LIKE ORDER BY ActivityDate DESC";
+                    query = "SELECT * FROM TrainingSessions WHERE Location LIKE @search OR " +
+                        "ActivtyDate LIKE @search" +
+                        "OR Distance_KM LIKE @search" +
+                        "OR Duration LIKE @search" +
+                        "ORDER BY ActivityDate DESC";
                 }
                 else
                 {
