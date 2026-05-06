@@ -230,7 +230,7 @@ namespace RunningGearTracker_AquinoE.Pages
                 // Check if the user searched for something
                 if (!string.IsNullOrEmpty(searchString))
                 {
-                    query = "SELECT * FROM Gear WHERE Brand LIKE @search OR ModelName LIKE @search";
+                    query = "SELECT * FROM Gear WHERE Brand LIKE @search OR ModelName LIKE @search OR Category LIKE @search OR PurchaseDate LIKE @search";
                 }
                 else
                 {
